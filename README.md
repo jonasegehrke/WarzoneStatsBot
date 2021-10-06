@@ -1,6 +1,6 @@
 # WarzoneStatsBot
 
-npm install puppeteer
+npm install puppeteer /n
 npm install puppeteer-extra
 npm install puppeteer-extra-plugin-stealth
 npm install discord.js
