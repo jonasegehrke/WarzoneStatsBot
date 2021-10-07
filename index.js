@@ -16,22 +16,29 @@ const client = new DiscordJS.Client({
 
 client.on('ready', () => {
     console.log("Bot is ready")
+    client.user.setPresence({ activities: [{ name: '!statscommands' }], status: 'online' });
 })
 
 client.on('messageCreate', (message) => {
     let splitMsg = message.content.split(" ");
-    if (splitMsg[0] == '!stats' && message.content.length > 6) {
+
+    if(message.content === "!statscommands"){
+        message.reply("`!stats **battletag**` receive current stats on profile \n`!sub **battletag**` subscribe to live feed with changes in K/D and Wins");
+    }
+
+    
+    if (splitMsg[0] == '!xd' && message.content.length > 6) {
 
         const sentId = splitMsg[1].replace("#","%2523");
    
         scrapeProfile(`https://wzstats.gg/profile/${sentId}/platform/battle`).then(data => {
             
-
+            const attachment = new DiscordJS.MessageAttachment('./images/warzonelogo.png')
 
             const exampleEmbed = new MessageEmbed()
             .setColor('#0099ff')
             .setTitle(splitMsg[1])
-            .setImage("https://upload.wikimedia.org/wikipedia/commons/e/e6/Call_of_Duty_Warzone_Logo.png")
+            .setImage('attachment://warzonelogo.png')
             .addFields(
                 { name: 'K/D', value: data[0], inline: true},
                 { name: 'Weekly K/D', value: data[1], inline: true},
@@ -43,7 +50,7 @@ client.on('messageCreate', (message) => {
             .setTimestamp()
             .setFooter('WarzoneStats');
     
-            message.reply({ embeds: [exampleEmbed] });
+            message.reply({ embeds: [exampleEmbed], files: [attachment] });
 
         });
     }
@@ -55,7 +62,7 @@ client.on('messageCreate', (message) => {
 
     if (splitMsg[0] == '!sub' && message.content.length > 4) {
 
-        saveProfile(splitMsg[1]).then(data =>{
+        saveProfile(splitMsg[1], message).then(data =>{
         })
     }
 
@@ -203,7 +210,7 @@ let data = {
 const azureAPI = `https://warzonestatswebapp.azurewebsites.net`
 
 
-async function saveProfile(id){
+async function saveProfile(id, message){
     const url = `https://wzstats.gg/profile/${id.replace("#","%2523")}/platform/battle`
         
         //DO SCRAPE FOR KD & WINS and resolve
@@ -216,6 +223,7 @@ async function saveProfile(id){
 
         let rawKd = {}
         let rawWins = {}
+        let notFound = false;
         try {
             const [kdScrape] = await page.$x('//*[@id="content-wrap"]/app-profile/div/app-shared-profile/div/div/div[1]/div[2]/app-stats-profile/div[1]/div[1]/div/div[2]');
             const kd = kdScrape.getProperty('textContent');
@@ -227,7 +235,11 @@ async function saveProfile(id){
             
         } catch (error) {
             console.log(error)
+            
+            notFound = true;
         }
+        
+        
 
         browser.close();
 
@@ -253,6 +265,17 @@ async function saveProfile(id){
             console.log("Values:");
             console.log(JSON.stringify(value));
 
+            console.log(value[1])
+            try {
+                value[1] = value[1].replace(",","");
+            } catch (error) {
+                
+            }
+            
+           
+        
+            console.log(value[1])
+
 
             let splitId = id.split("#");
 
@@ -267,13 +290,19 @@ async function saveProfile(id){
         })
 
       
-      
+        
 
         await fetch (azureAPI + `/profile`,{
             method: "POST",
             body: JSON.stringify(data),
             headers: {"Content-type": "application/json; charset=UTF-8"}
         })
+
+        if(notFound ==  true){
+            message.reply("Profile not found. Make sure the profile is set to public on https://wzstats.gg/.\nWhen set to public please wait 15 minutes. \nIf problem persists, please notify Gehrke#9749 on Discord");
+        }else if (notFound ==  false){
+            message.reply("You will now recieve live updates in <#894931912446050396> on K/D and Wins from " + id);
+        }
 
     //Scrape data on profile, resolve, send to REST
 
@@ -366,8 +395,9 @@ async function scheduledUpdate(){
 
         
             
-            let channel = client.channels.cache.get("754003644789293180") //change to channel id
+            let channel = client.channels.cache.get("894931912446050396") //change to channel id
             
+
             if(profiles[i].kd != value[0]){
                 let data = {
                     activisionId: profiles[i].activisionId,
@@ -382,30 +412,34 @@ async function scheduledUpdate(){
 
                 if(profiles[i].kd < value[0]){
                     //positive
+                    const attachment = new DiscordJS.MessageAttachment('./images/upwardarrow.png')
+
                     const exampleEmbed = new MessageEmbed()
                     .setColor('#0099ff')
                     .setTitle(id)
-                    .setThumbnail("https://img-premium.flaticon.com/png/512/2268/premium/2268143.png?token=exp=1633545155~hmac=039e8a1942810cb3b978e2456fab3f7b")
+                    .setThumbnail('attachment://upwardarrow.png')
                     .addFields(
                         { name: 'Progress!', value: id + " now has " + value[0] + " K/D", inline: true},
                     )
                     .setTimestamp()
                     .setFooter('WarzoneStats');
-                    channel.send({ embeds: [exampleEmbed] });
+                    channel.send({ embeds: [exampleEmbed], files: [attachment] });
 
                 }
                 if(profiles[i].kd > value[0]){
                     //negative
+                    const attachment = new DiscordJS.MessageAttachment('./images/downarrow.png')
+
                     const exampleEmbed = new MessageEmbed()
                     .setColor('#0099ff')
                     .setTitle(id)
-                    .setThumbnail("https://img-premium.flaticon.com/png/512/2268/premium/2268142.png?token=exp=1633545788~hmac=5eb707878f12d1edaaa9ff55ed341415")
+                    .setThumbnail('attachment://downarrow.png')
                     .addFields(
                         { name: 'Snap out of it!', value: id + " now has " + value[0] + " K/D", inline: true},
                     )
                     .setTimestamp()
                     .setFooter('WarzoneStats');
-                    channel.send({ embeds: [exampleEmbed] });
+                    channel.send({ embeds: [exampleEmbed], files: [attachment] });
                 }
 
             }
@@ -421,18 +455,19 @@ async function scheduledUpdate(){
                 console.log(JSON.stringify(data))
                 updateProfile(data)
                 //embed with discord.js if changes made
+                const attachment = new DiscordJS.MessageAttachment('./images/upwardarrow.png')
 
                 const exampleEmbed = new MessageEmbed()
                 .setColor('#0099ff')
                 .setTitle(id)
-                .setThumbnail("https://img-premium.flaticon.com/png/512/2268/premium/2268143.png?token=exp=1633545155~hmac=039e8a1942810cb3b978e2456fab3f7b")
+                .setThumbnail('attachment://upwardarrow.png')
                 .addFields(
                     { name: 'Victory!', value: id+ " now has " + value[1] + " wins!", inline: true},
                 )
                 .setTimestamp()
                 .setFooter('WarzoneStats');
     
-                channel.send({ embeds: [exampleEmbed] });
+                channel.send({ embeds: [exampleEmbed], files: [attachment] });
 
             }
         });
