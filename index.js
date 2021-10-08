@@ -1,6 +1,7 @@
 import DiscordJS, { Intents, MessageAttachment, MessageEmbed } from 'discord.js'
 import dotenv from 'dotenv'
 import fetch from "node-fetch";
+import builders, { userMention } from "@discordjs/builders";
 import fs from 'fs'
 import path from 'path'
 
@@ -27,7 +28,7 @@ client.on('messageCreate', (message) => {
     }
 
     
-    if (splitMsg[0] == '!xd' && message.content.length > 6) {
+    if (splitMsg[0] == '!stats' && message.content.length > 6) {
 
         const sentId = splitMsg[1].replace("#","%2523");
    
@@ -45,7 +46,7 @@ client.on('messageCreate', (message) => {
                 { name: 'Wins', value: data[2], inline: true},
                 { name: 'Win%', value: data[3] + "%", inline: true},
                 { name: 'Kills', value: data[4], inline: true},
-                { name: 'Kills/Game', value: data[5].replace("Level ", ""), inline: true }
+                { name: 'Kills/Game', value: data[5], inline: true }
             )
             .setTimestamp()
             .setFooter('WarzoneStats');
@@ -54,10 +55,7 @@ client.on('messageCreate', (message) => {
 
         });
     }
-    if (message.content === '!test') {
-        scheduledUpdate().then(data =>{
-        })
-    }
+    
 
 
     if (splitMsg[0] == '!sub' && message.content.length > 4) {
@@ -212,6 +210,8 @@ const azureAPI = `https://warzonestatswebapp.azurewebsites.net`
 
 async function saveProfile(id, message){
     const url = `https://wzstats.gg/profile/${id.replace("#","%2523")}/platform/battle`
+
+        
         
         //DO SCRAPE FOR KD & WINS and resolve
 
@@ -283,9 +283,11 @@ async function saveProfile(id, message){
                 activisionId: splitId[1],
                 name: splitId[0],
                 kd: value[0],
-                wins: value[1]
+                wins: value[1],
+                discord: message.author.id.toString()
             }
 
+            //message.author.id.toString()
             return data;
         })
 
@@ -397,14 +399,18 @@ async function scheduledUpdate(){
             
             let channel = client.channels.cache.get("894931912446050396") //change to channel id
             
+            
 
             if(profiles[i].kd != value[0]){
                 let data = {
                     activisionId: profiles[i].activisionId,
                     name: profiles[i].name,
                     kd: value[0],
-                    wins: profiles[i].wins
+                    wins: profiles[i].wins,
+                    discord: profiles[i].discord
                 }
+                const discordUser = userMention(profiles[i].discord);
+                
 
                 console.log(JSON.stringify(data))
                 updateProfile(data)
@@ -423,7 +429,7 @@ async function scheduledUpdate(){
                     )
                     .setTimestamp()
                     .setFooter('WarzoneStats');
-                    channel.send({ embeds: [exampleEmbed], files: [attachment] });
+                    channel.send({ content: discordUser, embeds: [exampleEmbed], files: [attachment] });
 
                 }
                 if(profiles[i].kd > value[0]){
@@ -439,7 +445,7 @@ async function scheduledUpdate(){
                     )
                     .setTimestamp()
                     .setFooter('WarzoneStats');
-                    channel.send({ embeds: [exampleEmbed], files: [attachment] });
+                    channel.send({ content: discordUser, embeds: [exampleEmbed], files: [attachment] });
                 }
 
             }
@@ -449,8 +455,11 @@ async function scheduledUpdate(){
                     activisionId: profiles[i].activisionId,
                     name: profiles[i].name,
                     kd: profiles[i].kd,
-                    wins: value[1]
+                    wins: value[1],
+                    discord: profiles[i].discord
                 }
+
+                const discordUser = userMention(profiles[i].discord);
                 
                 console.log(JSON.stringify(data))
                 updateProfile(data)
@@ -467,7 +476,7 @@ async function scheduledUpdate(){
                 .setTimestamp()
                 .setFooter('WarzoneStats');
     
-                channel.send({ embeds: [exampleEmbed], files: [attachment] });
+                channel.send({ content: discordUser, embeds: [exampleEmbed], files: [attachment] });
 
             }
         });
