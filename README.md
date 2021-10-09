@@ -14,3 +14,11 @@ npm install dotenv
 
 npm install node-fetch
 
+---#Linux#---
+
+sudo apt-get install chromium-browser
+
+  $ cd /path/to/your/project
+  $ [sudo] npm install forever-monitor
+
+
