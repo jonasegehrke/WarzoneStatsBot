@@ -132,6 +132,10 @@ async function getProfile(url) {
         gamesPlayed: respData.data.segments[1].stats.gamesPlayed.value,
         hoursPlayed: Math.floor(respData.data.segments[1].stats.timePlayed.value / 3600)
     }
+    if(respData.data === undefined){
+        message.reply("Failed to fetch profile. This could be a glitch in cod.tracker.gg. \nPlease wait 5 minutes and try again. If problems persists contact Gehrke#9749" + id);
+        return;
+    }
     return profileData;
 }
 
@@ -149,8 +153,8 @@ async function getProfile(url) {
 
 
 
-//const azureAPI = `https://warzonestatswebapp.azurewebsites.net`
-const azureAPI = `http://localhost:8080`
+const azureAPI = `https://warzonestatswebapp.azurewebsites.net`
+//const azureAPI = `http://localhost:8080`
 
 async function saveProfile(id, message) {
     const url = `https://api.tracker.gg/api/v2/warzone/standard/profile/atvi/${id.replace("#", "%23")}?type=wz`
@@ -171,6 +175,11 @@ async function saveProfile(id, message) {
         })
 
     const respPRData = await respPR.json()
+
+    if(respProfileData.data === undefined || respPRData.data === undefined){
+        message.reply("Failed to fetch profile. This could be a glitch in cod.tracker.gg. \nPlease wait 5 minutes and try again. If problems persists contact Gehrke#9749" + id);
+        return;
+    }
 
     let pr = null;
 
@@ -266,7 +275,9 @@ async function scheduledUpdate() {
 
         let pr = null;
 
-        
+        if(respPRData.data === undefined || respProfileData.data === undefined){ // may need work
+            continue;
+        }
 
         for (let i = 0; i < respPRData.data.length; i++) {
             if (respPRData.data[i].metadata.modeName.indexOf('Resurgence') >= 0) {
@@ -290,7 +301,7 @@ async function scheduledUpdate() {
 
 
 
-        let channel = client.channels.cache.get("754003644789293180") //change to channel id
+        let channel = client.channels.cache.get("894931912446050396") //change to channel id
 
 
 
