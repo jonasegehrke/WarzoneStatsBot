@@ -1,21 +1,14 @@
 # WarzoneStatsBot
 
+Discord bot for handeling/announcing stats for "Warzone" online game.  Created with discord.js
 
-npm install discord.js
+## Setup
 
-npm install @discordjs/builders
+Install dependencies
+```npm i?```
 
-npm install dotenv
+add discord bot token to env
+```touch .env```
 
-npm install node-fetch
-
----#Linux#---
-
-  $ cd /path/to/your/project
-  $ [sudo] npm install forever-monitor
-
----#To Change#---
-
-touch .env
-add token to env
-
+start project (NOTE you need the [backend](https://github.com/jonasegehrke/WarzoneStatsREST))
+node index.js
